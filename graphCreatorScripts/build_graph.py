@@ -1,16 +1,17 @@
 from collections import defaultdict
 import csv
 import pickle
+import random
 
 import networkx as nx
 
+# formatting strings for different node types
+node_player = "player_{}"
+node_game_purchased = "purchased_{}"
+node_game_played = "played_{}"
+
 
 def tripartite_graph(connect_games=True):
-    # formatting strings for different node types
-    node_player = "player_{}"
-    node_game_purchased = "purchased_{}"
-    node_game_played = "played_{}"
-
     graph = nx.Graph()
 
     players_list, games_list = games_players_list()
@@ -35,6 +36,27 @@ def tripartite_graph(connect_games=True):
                 return -1
             assert player_node in graph.nodes() and game_node in graph.nodes()
             graph.add_edge(player_node, game_node)
+    return graph
+
+
+def tripartite_remove_edges(n_remove=0):
+    graph = tripartite_graph()
+    removing_edges = [(u, v) for u, v in graph.edges() if str(v).startswith("player_")]
+
+    # if number of edges to remove not set, remove 1/3 of edges
+    if n_remove == 0:
+        to_remove = int(len(graph.edges()) / 3)
+    else:
+        to_remove = n_remove
+
+    removed = set()
+    while len(removed) < to_remove:
+        removing_edge = random.choice(removing_edges)
+        while removing_edge in removed:
+            removing_edge = random.choice(removing_edges)
+        graph.remove_edges_from([removing_edge])
+        removed.add(removing_edge)
+
     return graph
 
 
