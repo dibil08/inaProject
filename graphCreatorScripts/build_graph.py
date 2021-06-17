@@ -5,29 +5,36 @@ import pickle
 import networkx as nx
 
 
-def tripartite_graph():
+def tripartite_graph(connect_games=True):
+    # formatting strings for different node types
+    node_player = "player_{}"
+    node_game_purchased = "purchased_{}"
+    node_game_played = "played_{}"
+
     graph = nx.Graph()
 
     players_list, games_list = games_players_list()
     datadict = steam_dict()
 
-    for g1 in games_list:
-        # negative id for purchased games nodes, positive id for played games
-        graph.add_node(-g1)
-        graph.add_node(g1)
-        graph.add_edge(-g1, g1)
+    for g in games_list:
+        # add once for purchased group and once for played group
+        graph.add_node(node_game_purchased.format(g))
+        graph.add_node(node_game_played.format(g))
+        if connect_games:
+            graph.add_edge(node_game_purchased.format(g), node_game_played.format(g))
     for player in players_list:
-        graph.add_node(player)
+        player_node = node_player.format(player)
+        graph.add_node(player_node)
         for game in datadict[player]:
             if datadict[player][game]["status"] == "play":
-                game_node = game
+                game_node = node_game_played.format(game)
             elif datadict[player][game]["status"] == "purchase":
-                game_node = -game
+                game_node = node_game_purchased.format(game)
             else:
-                print("Unknown game status")
+                print("Unknown game status:", datadict[player][game]["status"])
                 return -1
-            assert player in graph.nodes() and game_node in graph.nodes
-            graph.add_edge(player, game_node)
+            assert player_node in graph.nodes() and game_node in graph.nodes()
+            graph.add_edge(player_node, game_node)
     return graph
 
 
